@@ -17,18 +17,18 @@ from model import WireClassifier
 parser = argparse.ArgumentParser(description='PyTorch Classification')
 parser.add_argument('--model_name', type=str, default="efficientnet_b4", metavar='S',
                     help='model name')
-parser.add_argument('--model_path', type=str, default="efficientnet_b4_result_1_1.pt", metavar='S',
+parser.add_argument('--model_path', type=str, default="efficientnet_b4_result_1_4.pt", metavar='S',
                     help='model path')
 parser.add_argument('--num_classes', type=int, default=2, metavar='N',
                     help='num classes')
 parser.add_argument('--num_workers', type=int, default=6, metavar='N',
                     help='num workers')
 
-parser.add_argument('--dataset_dir', type=str, default="E:\\work\\kesco\\raw_data\\20211008\\segmented_good_data", metavar='S',
+parser.add_argument('--dataset_dir', type=str, default="E:\\work\\kesco\\raw_data\\20211008", metavar='S',
                     help='model path')
-parser.add_argument('--df_path', type=str, default="good_segmented_all.csv", metavar='S',
+parser.add_argument('--df_path', type=str, default="segmented_test.csv", metavar='S',
                     help='model path')
-parser.add_argument('--save_dir_name', type=str, default="test_result_gd_all", metavar='S',
+parser.add_argument('--save_dir_name', type=str, default="test_all_result_5", metavar='S',
                     help='model path')
 
 
@@ -49,13 +49,51 @@ def main():
     test_df = pd.read_csv(args.df_path).reset_index(drop=True)
 
     # transform
+    # transform = A.Compose([
+    #     A.Resize(height=380, width=380),
+    #     A.Normalize(
+    #         mean=[0.485, 0.456, 0.406],
+    #         std=[0.229, 0.224, 0.225]),
+    #     ToTensorV2()
+    # ])
+
+    #####
     transform = A.Compose([
-        A.Resize(height=380, width=380),
-        A.Normalize(
-            mean=[0.485, 0.456, 0.406],
-            std=[0.229, 0.224, 0.225]),
-        ToTensorV2()
+        A.RandomResizedCrop(height=380, width=380, scale=(0.8, 1.0)),
+        A.Flip(),
+        A.Transpose(),
+        A.OneOf([
+            A.GaussNoise(),
+            A.NoOp(),
+            A.MultiplicativeNoise(),
+            A.ISONoise()
+        ], p=0.5),
+        A.OneOf([
+            A.MotionBlur(p=.2),
+            A.MedianBlur(blur_limit=3, p=0.1),
+            A.Blur(blur_limit=3, p=0.1),
+        ], p=0.5),
+        A.OneOf([
+            A.OpticalDistortion(p=0.3),
+            A.GridDistortion(p=.1),
+            A.PiecewiseAffine(p=0.3),
+        ], p=0.5),
+        A.OneOf([
+            A.CLAHE(clip_limit=2),
+            A.Sharpen(),
+            A.Emboss(),
+            A.RandomBrightnessContrast(),
+            A.ColorJitter(brightness=0.3, contrast=0.3, saturation=0.3, hue=0.3),
+            A.RandomGamma()
+        ], p=0.5),
+        # A.Normalize(
+        #     mean=[0.485, 0.456, 0.406],
+        #     std=[0.229, 0.224, 0.225]),
+        A.Rotate(limit=15, p=0.3),
+        ToTensorV2(always_apply=True)
     ])
+    #####
+
 
     # dataset
     test_dataset = TestDataset(args, test_df, transform)

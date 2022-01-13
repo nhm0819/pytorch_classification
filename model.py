@@ -1,6 +1,7 @@
 import torch
 import timm
 
+
 class WireClassifier(torch.nn.Module):
     def __init__(self, args, pretrained=False):
         super(WireClassifier, self).__init__()
@@ -14,3 +15,4 @@ class WireClassifier(torch.nn.Module):
         x = self.model(x)
         # x = self.softmax(x)
         return x
+

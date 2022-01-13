@@ -10,7 +10,7 @@ from scheduler import CosineAnnealingWarmUpRestarts
 def train_fn(args, model, device, train_dataset, valid_dataset, criterion, fold, writer, LOGGER):
     scaler = GradScaler()
     # optimizer = optim.Adam(model.parameters(), lr=args.lr)
-    optimizer = optim.RMSprop(model.parameters(), 1e-8, 0.9, 1e-3, momentum=0.9)
+    optimizer = optim.RMSprop(model.parameters(), lr=args.lr, alpha=0.9, eps=1e-8, weight_decay=args.weight_decay, momentum=args.momentum)
     # scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=100, eta_min=1e-7)
     scheduler = CosineAnnealingWarmUpRestarts(optimizer, T_0=50, T_mult=1, eta_max=args.lr, T_up=10, gamma=0.7)
 
@@ -30,9 +30,9 @@ def train_fn(args, model, device, train_dataset, valid_dataset, criterion, fold,
         train_loss, train_accuracy, train_lr = train_epoch(epoch, args, model, device, train_loader, criterion,
                                                            optimizer, scheduler, scaler, LOGGER)
 
-        writer.add_scalars('Loss', {'train': train_loss}, epoch + args.epochs * fold)
-        writer.add_scalars('Accuracy', {'train': train_accuracy}, epoch + args.epochs * fold)
-        writer.add_scalars('LR', {'train': train_lr}, epoch + args.epochs * fold)
+        writer.add_scalars('Loss', {'train': train_loss}, epoch)
+        writer.add_scalars('Accuracy', {'train': train_accuracy}, epoch)
+        writer.add_scalars('LR', {'train': train_lr}, epoch)
 
         if epoch % args.val_per_epochs == 0:
             # print("=====Validation=====")
@@ -50,8 +50,8 @@ def train_fn(args, model, device, train_dataset, valid_dataset, criterion, fold,
                            os.path.join(args.output_dir, f'{args.model_name}_fold{fold}_best_loss.pt'))
                 LOGGER.info(f'Save the best loss model, loss = {best_loss:2f}, acc = {valid_accuracy:2f}')
 
-            writer.add_scalars('Loss', {'val': valid_loss}, epoch + args.epochs * fold)
-            writer.add_scalars('Accuracy', {'val': valid_accuracy}, epoch + args.epochs * fold)
+            writer.add_scalars('Loss', {'val': valid_loss}, epoch)
+            writer.add_scalars('Accuracy', {'val': valid_accuracy}, epoch)
 
             # model.train()
 
