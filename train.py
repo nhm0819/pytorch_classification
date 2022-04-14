@@ -11,7 +11,7 @@ import albumentations as A
 from albumentations.pytorch import ToTensorV2
 
 from model import WireClassifier
-from train import train_fn, test_fn
+from train_function import train_fn, test_fn
 from dataset import CustomDataset
 from transforms import get_transforms
 
